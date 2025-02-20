@@ -18,6 +18,12 @@ services:
       - redis
     networks:
       - ai_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/data/chromadb
 
   celery_worker:
     build:
@@ -36,6 +42,12 @@ services:
       - backend
     networks:
       - ai_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/data/chromadb
 
   celery_beat:
     build:
@@ -52,15 +64,25 @@ services:
       - backend
     networks:
       - ai_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
 
   redis:
-    image: redis:7-alpine
+    image: cgr.dev/chainguard/redis:latest
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - ai_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
 
   frontend:
     build:
@@ -77,6 +99,11 @@ services:
       - backend
     networks:
       - ai_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
 
 volumes:
   redis_data:

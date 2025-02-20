@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM cgr.dev/chainguard/python:latest-dev
 
 # Set working directory
 WORKDIR /app
@@ -9,13 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
 
 # Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        curl \
-        git \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+USER root
+RUN apk add --no-cache \
+    build-base \
+    curl \
+    git
 
 # Install Python dependencies
 COPY requirements.txt .
@@ -30,6 +28,9 @@ RUN mkdir -p /app/data/chromadb
 # Make the entrypoint script executable
 COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Switch back to non-root user
+USER nonroot
 
 # Set the default command
 ENTRYPOINT ["/entrypoint.sh"]

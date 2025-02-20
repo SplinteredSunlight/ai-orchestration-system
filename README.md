@@ -86,13 +86,24 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 ### Prerequisites
 
-- Docker and Docker Compose (latest version)
+- Chainguard Images (via cgr.dev)
 - Node.js (v18 or later)
 - Python 3.11 or later
 - OpenAI API key (for AI model access)
 - Git (for version control)
 - 8GB RAM minimum (16GB recommended)
 - 20GB free disk space
+
+### Security Features
+
+- Chainguard Images for enhanced security:
+  - Minimal attack surface
+  - Regular security updates
+  - Built-in software supply chain security
+  - SBOM (Software Bill of Materials) support
+- Read-only containers with no privilege escalation
+- Secure defaults in Docker Compose configuration
+- Non-root user execution
 
 ### Environment Setup
 
@@ -142,7 +153,16 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 2. Access the services:
    - Frontend Dashboard: http://localhost:3000
    - Backend API & Docs: http://localhost:8000/docs
-   - Redis Commander: http://localhost:8081
+   - Redis: http://localhost:6379
+
+3. Verify container security:
+   ```bash
+   # View container security status
+   docker inspect <container_name> | grep -A5 SecurityOpt
+   
+   # View SBOM for images
+   docker buildx imagetools inspect cgr.dev/chainguard/python:latest-dev --format '{{json .SBOM}}'
+   ```
 
 3. Monitor logs:
    ```bash

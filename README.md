@@ -86,10 +86,13 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 ### Prerequisites
 
-- Docker and Docker Compose
+- Docker and Docker Compose (latest version)
 - Node.js (v18 or later)
 - Python 3.11 or later
-- OpenAI API key
+- OpenAI API key (for AI model access)
+- Git (for version control)
+- 8GB RAM minimum (16GB recommended)
+- 20GB free disk space
 
 ### Environment Setup
 
@@ -102,28 +105,74 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 2. Set up environment variables:
    ```bash
    cp backend/.env.example backend/.env
-   # Edit backend/.env with your OpenAI API key and other settings
    ```
+   Edit backend/.env and configure:
+   - OPENAI_API_KEY: Your OpenAI API key
+   - SECRET_KEY: Generate a secure random key
+   - COST_LIMIT: Set your preferred API cost limit
+   - Other settings as needed
 
-3. Install frontend dependencies:
+3. Install dependencies:
    ```bash
+   # Install frontend dependencies
    cd frontend
    ./install-deps.sh
    cd ..
+
+   # Install backend dependencies
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+   pip install -r requirements.txt
+   cd ..
+   ```
+
+4. Initialize ChromaDB:
+   ```bash
+   mkdir -p data/chromadb
    ```
 
 ### Development
 
-Start the development environment:
-```bash
-./start-dev.sh
-```
+1. Start the development environment:
+   ```bash
+   ./start-dev.sh
+   ```
 
-This will start:
-- Frontend at http://localhost:3000
-- Backend API at http://localhost:8000
-- Redis at localhost:6379
-- ChromaDB with persistence
+2. Access the services:
+   - Frontend Dashboard: http://localhost:3000
+   - Backend API & Docs: http://localhost:8000/docs
+   - Redis Commander: http://localhost:8081
+
+3. Monitor logs:
+   ```bash
+   docker-compose logs -f
+   ```
+
+4. Stop the environment:
+   ```bash
+   docker-compose down
+   ```
+
+### Troubleshooting
+
+1. If services fail to start:
+   ```bash
+   docker-compose down -v
+   docker-compose up --build
+   ```
+
+2. Clear ChromaDB data:
+   ```bash
+   rm -rf data/chromadb/*
+   ```
+
+3. Reset frontend dependencies:
+   ```bash
+   cd frontend
+   rm -rf node_modules
+   ./install-deps.sh
+   ```
 
 ## 📁 Project Structure
 
@@ -177,7 +226,32 @@ ai-orchestration-system/
 
 ## 📈 Project Status
 
-Currently in initial development phase. Check back for regular updates on progress and milestones.
+Current Development Phase: Alpha
+
+Completed Features:
+- ✅ Project structure and architecture
+- ✅ Basic frontend UI components
+- ✅ Backend API endpoints
+- ✅ AI agent framework
+- ✅ Docker development environment
+
+In Progress:
+- 🔄 AI agent implementations
+- 🔄 RAG system integration
+- 🔄 Cost management system
+- 🔄 Task execution engine
+
+Upcoming:
+- ⏳ Testing suite
+- ⏳ Production deployment
+- ⏳ Performance optimization
+- ⏳ Documentation improvements
+
+Next Milestone: Beta Release (Expected: March 2025)
+- Feature-complete AI agents
+- Full RAG system implementation
+- Comprehensive testing
+- Production deployment guide
 
 ## 🤝 Contributing
 

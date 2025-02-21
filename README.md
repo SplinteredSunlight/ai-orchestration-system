@@ -86,14 +86,16 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 ### Prerequisites
 
-1. Install Docker Desktop:
+1. Install Podman:
    ```bash
-   # macOS (using Homebrew)
-   brew install --cask docker
+   # macOS
+   brew install podman
+   podman machine init
+   podman machine start
 
    # Linux (Ubuntu/Debian)
-   curl -fsSL https://get.docker.com -o get-docker.sh
-   sudo sh get-docker.sh
+   sudo apt-get update
+   sudo apt-get install -y podman podman-compose
    ```
 
 2. Other requirements:
@@ -102,19 +104,27 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
    - 8GB RAM minimum (16GB recommended)
    - 20GB free disk space
 
-3. Start Docker Desktop:
-   - On macOS: Open Docker Desktop application
-   - On Linux: `sudo systemctl start docker`
+3. Verify Podman installation:
+   ```bash
+   podman --version
+   podman info
+   ```
 
 ### Security Features
 
-- Chainguard-native deployment:
+- Podman Security:
+  - Daemonless container engine
+  - Rootless container execution
+  - SELinux integration
+  - Network isolation
+  - Stricter security defaults
+
+- Chainguard Images:
   - Minimal attack surface through distroless images
   - Automatic security updates
   - Built-in software supply chain security
   - SBOM (Software Bill of Materials) support
-  - Secure by default configuration
-  - Non-root execution
+  - Verified image signatures
   - Read-only root filesystem
   - No privilege escalation
 
@@ -160,12 +170,13 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 1. Start the development environment:
    ```bash
-   ./start-dev.sh
+   cd containers && ./start-dev.sh
    ```
    This will automatically:
-   - Pull secure Chainguard images
-   - Start all services with security configurations
-   - Check service health
+   - Install Podman if not present
+   - Pull and verify Chainguard images
+   - Start all services with enhanced security
+   - Display security status for each container
    - Show service logs
 
 2. Access the services:
@@ -175,27 +186,30 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 3. View service status:
    ```bash
-   # View running services
-   docker compose ps
+   # View running containers
+   podman ps
 
-   # View service logs
-   docker compose logs -f
+   # View container logs
+   podman-compose logs -f
 
-   # View SBOM for images
-   docker buildx imagetools inspect cgr.dev/chainguard/python:latest-dev --format '{{json .SBOM}}'
+   # View security info
+   podman inspect <container-name>
+
+   # View image signatures
+   podman image verify cgr.dev/chainguard/python:latest-dev
    ```
 
 4. Stop the environment:
    ```bash
-   docker compose down
+   podman-compose down
    ```
 
 ### Troubleshooting
 
 1. If services fail to start:
    ```bash
-   docker compose down -v
-   docker compose up --build -d
+   podman-compose down -v
+   podman-compose up -d
    ```
 
 2. Clear ChromaDB data:
@@ -203,19 +217,34 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
    rm -rf data/chromadb/*
    ```
 
-3. View service logs:
+3. View detailed logs:
    ```bash
    # All services
-   docker compose logs -f
+   podman-compose logs -f
 
    # Specific service
-   docker compose logs -f <service-name>
+   podman logs -f <container-name>
    ```
 
 4. Check container security:
    ```bash
-   # View security options
-   docker inspect <container-name> | grep -A5 SecurityOpt
+   # View security info
+   podman inspect <container-name> --format '{{.HostConfig.SecurityOpt}}'
+   
+   # View capabilities
+   podman inspect <container-name> --format '{{.HostConfig.CapDrop}}'
+   ```
+
+5. Reset Podman:
+   ```bash
+   # On macOS
+   podman machine stop
+   podman machine rm
+   podman machine init
+   podman machine start
+
+   # On Linux
+   podman system reset
    ```
 
 ## 📁 Project Structure

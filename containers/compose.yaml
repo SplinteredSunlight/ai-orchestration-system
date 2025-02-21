@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3'
 
 services:
   backend:
@@ -6,8 +6,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
-      - ./data/chromadb:/app/data/chromadb
+      - ../backend:/app:Z
+      - ../data/chromadb:/app/data/chromadb:Z
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
@@ -19,18 +19,18 @@ services:
     command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
       - redis
+    user: "1000:1000"
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /app/data/chromadb
+    cap_drop:
+      - ALL
 
   celery_worker:
     image: cgr.dev/chainguard/python:latest-dev
     volumes:
-      - ./backend:/app
-      - ./data/chromadb:/app/data/chromadb
+      - ../backend:/app:Z
+      - ../data/chromadb:/app/data/chromadb:Z
     environment:
       - PYTHONPATH=/app
       - REDIS_HOST=redis
@@ -41,17 +41,17 @@ services:
     depends_on:
       - redis
       - backend
+    user: "1000:1000"
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /app/data/chromadb
+    cap_drop:
+      - ALL
 
   celery_beat:
     image: cgr.dev/chainguard/python:latest-dev
     volumes:
-      - ./backend:/app
+      - ../backend:/app:Z
     environment:
       - PYTHONPATH=/app
       - REDIS_HOST=redis
@@ -61,31 +61,33 @@ services:
     depends_on:
       - redis
       - backend
+    user: "1000:1000"
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
+    cap_drop:
+      - ALL
 
   redis:
     image: cgr.dev/chainguard/redis:latest
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - redis_data:/data:Z
+    user: "1000:1000"
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
+    cap_drop:
+      - ALL
 
   frontend:
     image: cgr.dev/chainguard/node:latest-dev
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - ../frontend:/app:Z
+      - node_modules:/app/node_modules:Z
     environment:
       - NODE_ENV=development
       - REACT_APP_API_URL=http://localhost:8000
@@ -93,12 +95,15 @@ services:
     command: ["npm", "start"]
     depends_on:
       - backend
+    user: "1000:1000"
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
+    cap_drop:
+      - ALL
 
 volumes:
   redis_data:
+    driver: local
+  node_modules:
     driver: local

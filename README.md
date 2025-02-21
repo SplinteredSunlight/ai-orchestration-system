@@ -86,11 +86,25 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 ### Prerequisites
 
-- Chainguard CLI (melange)
-- OpenAI API key (for AI model access)
-- Git (for version control)
-- 8GB RAM minimum (16GB recommended)
-- 20GB free disk space
+1. Install Docker Desktop:
+   ```bash
+   # macOS (using Homebrew)
+   brew install --cask docker
+
+   # Linux (Ubuntu/Debian)
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+   ```
+
+2. Other requirements:
+   - OpenAI API key (for AI model access)
+   - Git (for version control)
+   - 8GB RAM minimum (16GB recommended)
+   - 20GB free disk space
+
+3. Start Docker Desktop:
+   - On macOS: Open Docker Desktop application
+   - On Linux: `sudo systemctl start docker`
 
 ### Security Features
 
@@ -146,46 +160,42 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 1. Start the development environment:
    ```bash
-   ./start.sh
+   ./start-dev.sh
    ```
    This will automatically:
-   - Install melange CLI if not present
-   - Pull Chainguard images
-   - Start all services securely
+   - Pull secure Chainguard images
+   - Start all services with security configurations
+   - Check service health
+   - Show service logs
 
 2. Access the services:
    - Frontend Dashboard: http://localhost:3000
    - Backend API & Docs: http://localhost:8000/docs
-   - Redis: http://localhost:6379
+   - Redis: localhost:6379
 
-3. Verify security:
+3. View service status:
    ```bash
-   # View service security status
-   melange status
+   # View running services
+   docker compose ps
 
-   # View SBOM for services
-   melange sbom list
+   # View service logs
+   docker compose logs -f
 
-   # Check security policies
-   melange policy check
-   ```
-
-3. Monitor logs:
-   ```bash
-   docker-compose logs -f
+   # View SBOM for images
+   docker buildx imagetools inspect cgr.dev/chainguard/python:latest-dev --format '{{json .SBOM}}'
    ```
 
 4. Stop the environment:
    ```bash
-   docker-compose down
+   docker compose down
    ```
 
 ### Troubleshooting
 
 1. If services fail to start:
    ```bash
-   melange down
-   melange up --force
+   docker compose down -v
+   docker compose up --build -d
    ```
 
 2. Clear ChromaDB data:
@@ -193,14 +203,19 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
    rm -rf data/chromadb/*
    ```
 
-3. View detailed logs:
+3. View service logs:
    ```bash
-   melange logs <service-name>
+   # All services
+   docker compose logs -f
+
+   # Specific service
+   docker compose logs -f <service-name>
    ```
 
-4. Check service health:
+4. Check container security:
    ```bash
-   melange health
+   # View security options
+   docker inspect <container-name> | grep -A5 SecurityOpt
    ```
 
 ## 📁 Project Structure

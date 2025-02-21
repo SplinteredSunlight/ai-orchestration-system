@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  backend:
+    image: cgr.dev/chainguard/python:latest-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./data/chromadb:/app/data/chromadb
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chromadb
+    working_dir: /app
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    depends_on:
+      - redis
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/data/chromadb
+
+  celery_worker:
+    image: cgr.dev/chainguard/python:latest-dev
+    volumes:
+      - ./backend:/app
+      - ./data/chromadb:/app/data/chromadb
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chromadb
+    working_dir: /app
+    command: ["celery", "-A", "app.core.celery_app", "worker", "--loglevel=info"]
+    depends_on:
+      - redis
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/data/chromadb
+
+  celery_beat:
+    image: cgr.dev/chainguard/python:latest-dev
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    working_dir: /app
+    command: ["celery", "-A", "app.core.celery_app", "beat", "--loglevel=info"]
+    depends_on:
+      - redis
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  redis:
+    image: cgr.dev/chainguard/redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  frontend:
+    image: cgr.dev/chainguard/node:latest-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:8000
+    working_dir: /app
+    command: ["npm", "start"]
+    depends_on:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+volumes:
+  redis_data:
+    driver: local

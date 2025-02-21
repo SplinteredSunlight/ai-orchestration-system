@@ -86,9 +86,7 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 ### Prerequisites
 
-- Chainguard Images (via cgr.dev)
-- Node.js (v18 or later)
-- Python 3.11 or later
+- Chainguard CLI (melange)
 - OpenAI API key (for AI model access)
 - Git (for version control)
 - 8GB RAM minimum (16GB recommended)
@@ -96,14 +94,15 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 ### Security Features
 
-- Chainguard Images for enhanced security:
-  - Minimal attack surface
-  - Regular security updates
+- Chainguard-native deployment:
+  - Minimal attack surface through distroless images
+  - Automatic security updates
   - Built-in software supply chain security
   - SBOM (Software Bill of Materials) support
-- Read-only containers with no privilege escalation
-- Secure defaults in Docker Compose configuration
-- Non-root user execution
+  - Secure by default configuration
+  - Non-root execution
+  - Read-only root filesystem
+  - No privilege escalation
 
 ### Environment Setup
 
@@ -147,21 +146,28 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 1. Start the development environment:
    ```bash
-   ./start-dev.sh
+   ./start.sh
    ```
+   This will automatically:
+   - Install melange CLI if not present
+   - Pull Chainguard images
+   - Start all services securely
 
 2. Access the services:
    - Frontend Dashboard: http://localhost:3000
    - Backend API & Docs: http://localhost:8000/docs
    - Redis: http://localhost:6379
 
-3. Verify container security:
+3. Verify security:
    ```bash
-   # View container security status
-   docker inspect <container_name> | grep -A5 SecurityOpt
-   
-   # View SBOM for images
-   docker buildx imagetools inspect cgr.dev/chainguard/python:latest-dev --format '{{json .SBOM}}'
+   # View service security status
+   melange status
+
+   # View SBOM for services
+   melange sbom list
+
+   # Check security policies
+   melange policy check
    ```
 
 3. Monitor logs:
@@ -178,8 +184,8 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
 
 1. If services fail to start:
    ```bash
-   docker-compose down -v
-   docker-compose up --build
+   melange down
+   melange up --force
    ```
 
 2. Clear ChromaDB data:
@@ -187,11 +193,14 @@ A sophisticated AI orchestration system that dynamically assigns tasks to specia
    rm -rf data/chromadb/*
    ```
 
-3. Reset frontend dependencies:
+3. View detailed logs:
    ```bash
-   cd frontend
-   rm -rf node_modules
-   ./install-deps.sh
+   melange logs <service-name>
+   ```
+
+4. Check service health:
+   ```bash
+   melange health
    ```
 
 ## 📁 Project Structure

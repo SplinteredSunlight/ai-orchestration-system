@@ -1,0 +1,22 @@
+FROM cgr.dev/chainguard/node:latest-dev
+
+WORKDIR /app
+
+# Install dependencies first for better caching
+COPY --chown=nonroot:nonroot package*.json ./
+RUN npm install
+
+# Copy application code
+COPY --chown=nonroot:nonroot . .
+
+# Set environment variables
+ENV NODE_ENV=development
+
+# Expose port
+EXPOSE 3000
+
+# Use non-root user (already set in base image)
+USER nonroot
+
+# Start development server
+CMD ["npm", "start"]

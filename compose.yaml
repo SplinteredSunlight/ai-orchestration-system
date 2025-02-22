@@ -1,13 +1,15 @@
-version: '3'
+version: '3.8'
 
 services:
   backend:
-    image: cgr.dev/chainguard/python:latest-dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.chainguard
     ports:
       - "8000:8000"
     volumes:
-      - ../backend:/app:Z
-      - ../data/chromadb:/app/data/chromadb:Z
+      - ./backend:/app:Z
+      - ./data/chromadb:/app/data/chromadb:Z
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
@@ -15,58 +17,60 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CHROMA_PERSIST_DIRECTORY=/app/data/chromadb
-    working_dir: /app
-    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
       - redis
-    user: "1000:1000"
-    read_only: true
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/data/chromadb
+    user: nonroot
 
   celery_worker:
-    image: cgr.dev/chainguard/python:latest-dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.chainguard
+    command: ["celery", "-A", "app.core.celery_app", "worker", "--loglevel=info"]
     volumes:
-      - ../backend:/app:Z
-      - ../data/chromadb:/app/data/chromadb:Z
+      - ./backend:/app:Z
+      - ./data/chromadb:/app/data/chromadb:Z
     environment:
       - PYTHONPATH=/app
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CHROMA_PERSIST_DIRECTORY=/app/data/chromadb
-    working_dir: /app
-    command: ["celery", "-A", "app.core.celery_app", "worker", "--loglevel=info"]
     depends_on:
       - redis
       - backend
-    user: "1000:1000"
-    read_only: true
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/data/chromadb
+    user: nonroot
 
   celery_beat:
-    image: cgr.dev/chainguard/python:latest-dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.chainguard
+    command: ["celery", "-A", "app.core.celery_app", "beat", "--loglevel=info"]
     volumes:
-      - ../backend:/app:Z
+      - ./backend:/app:Z
     environment:
       - PYTHONPATH=/app
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    working_dir: /app
-    command: ["celery", "-A", "app.core.celery_app", "beat", "--loglevel=info"]
     depends_on:
       - redis
       - backend
-    user: "1000:1000"
-    read_only: true
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: nonroot
 
   redis:
     image: cgr.dev/chainguard/redis:latest
@@ -74,33 +78,33 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data:Z
-    user: "1000:1000"
-    read_only: true
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: nonroot
 
   frontend:
-    image: cgr.dev/chainguard/node:latest-dev
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.chainguard
     ports:
       - "3000:3000"
     volumes:
-      - ../frontend:/app:Z
+      - ./frontend:/app:Z
       - node_modules:/app/node_modules:Z
     environment:
       - NODE_ENV=development
       - REACT_APP_API_URL=http://localhost:8000
-    working_dir: /app
-    command: ["npm", "start"]
     depends_on:
       - backend
-    user: "1000:1000"
-    read_only: true
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: nonroot
 
 volumes:
   redis_data:

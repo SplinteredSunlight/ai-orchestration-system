@@ -1,20 +1,5 @@
 #!/bin/bash
 
-# Function to check if Podman is installed
-check_podman() {
-    if ! command -v podman &> /dev/null; then
-        echo "Podman is not installed. Installing..."
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            brew install podman
-            podman machine init
-            podman machine start
-        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            # For Ubuntu/Debian
-            sudo apt-get update && sudo apt-get install -y podman
-        fi
-    fi
-}
-
 # Function to check if a service is healthy
 check_service() {
     local service=$1
@@ -36,25 +21,24 @@ check_service() {
 }
 
 # Create necessary directories
-mkdir -p ../data/chromadb
+mkdir -p data/chromadb
 
-# Ensure Podman is installed
-check_podman
+# Stop any running containers and clean up
+echo "Cleaning up existing containers..."
+podman stop $(podman ps -aq) 2>/dev/null || true
+podman rm $(podman ps -aq) 2>/dev/null || true
+podman volume rm redis_data node_modules 2>/dev/null || true
+podman network rm ai_network 2>/dev/null || true
 
-# Pull latest Chainguard images
-echo "Pulling latest Chainguard images..."
-podman pull cgr.dev/chainguard/python:latest-dev
-podman pull cgr.dev/chainguard/node:latest-dev
-podman pull cgr.dev/chainguard/redis:latest
+# Create network and volumes
+echo "Creating network and volumes..."
+podman network create ai_network
+podman volume create redis_data
+podman volume create node_modules
 
-# Verify image signatures
-echo "Verifying image signatures..."
-podman image verify cgr.dev/chainguard/python:latest-dev
-podman image verify cgr.dev/chainguard/node:latest-dev
-podman image verify cgr.dev/chainguard/redis:latest
-
-# Start services with Podman Compose
-echo "Starting AI Orchestration System..."
+# Build and start services
+echo "Building and starting services..."
+podman-compose build --pull
 podman-compose up -d
 
 # Wait for services to be ready
@@ -70,15 +54,16 @@ Access points:
 
 Security Status:
 "
+
 # Show security info for running containers
 for container in $(podman ps --format "{{.Names}}"); do
     echo "Container: $container"
     echo "Security Options:"
     podman inspect $container --format '{{.HostConfig.SecurityOpt}}'
-    echo "Capabilities:"
-    podman inspect $container --format '{{.HostConfig.CapDrop}}'
     echo "User:"
     podman inspect $container --format '{{.Config.User}}'
+    echo "Read Only:"
+    podman inspect $container --format '{{.HostConfig.ReadonlyRootfs}}'
     echo "---"
 done
 
